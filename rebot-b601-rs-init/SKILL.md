@@ -2,12 +2,12 @@
 name: rebot-b601-rs-init
 description: >
   Windows 环境下 reBot Arm B601-RS 机械臂初始化全流程 Skill。
-  覆盖：motorbridge 工具安装、7 颗 Robostride 电机 ID 写入（1~7）、
+  覆盖：PCAN-USB 驱动安装、motorbridge 工具安装、7 颗 Robostride 电机 ID 写入（1~7）、
   Motorbridge Studio 零点校准、Gateway 启停管理。
   触发场景：用户在 Windows 系统上配置 B601-RS 机械臂、
   写入电机 ID、校准零点、初始化新机械臂、设置 Robostride 电机参数。
   关键词：B601-RS、reBot Arm、机械臂初始化、电机 ID、零点校准、
-  motorbridge、Robostride、Windows、PCAN-USB。
+  motorbridge、Robostride、Windows、PCAN-USB、PEAK-System。
 ---
 
 # reBot B601-RS 初始化 Skill（Windows）
@@ -20,13 +20,14 @@ description: >
 
 - Windows 10/11
 - Python 3.10+（已安装，路径通常为 `C:\Users\<用户名>\AppData\Local\Programs\Python\Python312\`）
-- PCAN-USB 转接板已插入，驱动已安装
+- PCAN-USB 转接板已插入
 - 机械臂 48V 电源
 
 ## 核心流程概览
 
 | 步骤 | 内容 | 关键命令/操作 |
 |------|------|--------------|
+| 0 | 安装 PCAN-USB 驱动 | 运行 `scripts/download_pcan_driver.py` |
 | 1 | 安装 motorbridge | `python -m pip install motorbridge` |
 | 2 | 写入电机 ID（1~7）| `motorbridge-cli scan` + `motorbridge-cli id-set` |
 | 3 | 校准零点 | 启动 Gateway + Motorbridge Studio 网页 |
@@ -35,6 +36,38 @@ description: >
 **重要原则**：写入 ID 时，每次只连接 **1 颗电机** 到 CAN 总线。
 
 ## 详细操作
+
+### Step 0 — 安装 PCAN-USB 驱动
+
+PCAN-USB 转接板需要 PEAK-System 官方驱动才能在 Windows 上正常工作。
+
+#### 自动下载（推荐）
+
+```bash
+# 运行 Skill 自带的下载脚本
+python scripts/download_pcan_driver.py
+```
+
+脚本行为：
+1. 尝试从 PEAK-System 官网自动下载驱动安装包
+2. 如果自动下载失败，自动打开浏览器跳转到下载页面
+3. 提示用户手动下载并安装
+
+#### 手动下载
+
+如果自动下载失败，请访问：
+```
+https://www.peak-system.com/products/hardware/external-pc-interfaces/pcan-usb/
+```
+
+找到 **"Device driver setup 5.x for Windows"**，点击 **Download** 按钮下载。
+
+#### 安装驱动
+
+1. 运行下载的 `.exe` 安装包
+2. 按向导完成安装（默认选项即可）
+3. 将 PCAN-USB 转接板插入电脑 USB 口
+4. 打开 **设备管理器**，确认出现 **"PCAN-USB"** 设备且无黄色感叹号
 
 ### Step 1 — 安装 motorbridge
 
@@ -159,6 +192,7 @@ kill <pid>
 |------|------|------|
 | scan 无结果 | 电机未上电 | 确认 48V 电源开启 |
 | scan 无结果 | CAN 线松动/接反 | 检查 CAN_H、CAN_L |
+| scan 无结果 | PCAN-USB 驱动未安装 | 运行驱动下载脚本或手动安装 |
 | id-set 超时 | 通信不稳定 | 重试 scan 验证，通常已修改成功 |
 | 多颗电机同时扫描冲突 | 总线上有多颗电机 | 每次只接 1 颗 |
 
